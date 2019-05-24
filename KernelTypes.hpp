@@ -1,0 +1,6 @@
+#ifndef KERNEL_TYPES_HPP
+#define KERNEL_TYPES_HPP
+
+enum KernelType { POLYNOMIAL = 0, GAUSSIAN = 1, RADIAL = 2, SIGMOID = 3, LINEAR = 4, FOURIER = 5,  UNKNOWN = -1 };
+
+#endif
