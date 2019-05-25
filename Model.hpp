@@ -80,7 +80,7 @@ public:
 		return x.x;
 	}
 	
-	void Setup(ManagedArray x, ManagedArray y, double c, KernelType kernel, ManagedArray param, double tolerance = 0.001, int maxpasses = 5, int category = 1)
+	void Setup(ManagedArray& x, ManagedArray& y, double c, KernelType kernel, ManagedArray& param, double tolerance = 0.001, int maxpasses = 5, int category = 1)
 	{
 		ManagedOps::Free(dx);
 		ManagedOps::Free(dy);
