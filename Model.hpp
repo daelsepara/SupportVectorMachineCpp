@@ -590,7 +590,7 @@ public:
 				auto rows = Rows(X1);
 				auto cols = Cols(X2);
 
-				auto tempK = ManagedArray(rows, cols);
+				auto tempK = ManagedArray(cols, rows);
 				auto temp1 = ManagedArray(cols, rows);
 				auto temp2 = ManagedMatrix::Multiply(x, tX);
 
@@ -598,10 +598,10 @@ public:
 
 				ManagedMatrix::Expand(X1, cols, 1, tempK);
 				ManagedMatrix::Expand(X2, 1, rows, temp1);
-
+				
 				ManagedMatrix::Add(tempK, temp1);
 				ManagedMatrix::Add(tempK, temp2);
-
+				
 				auto sigma = KernelParam.Length() > 0 ? KernelParam(0) : 1;
 
 				if (Type == KernelType::RADIAL)

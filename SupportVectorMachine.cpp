@@ -185,7 +185,7 @@ void Load2D(std::string filename, ManagedArray& input, ManagedArray& output, con
 	examples = 0;
 	
 	while (std::getline(file, line))
-    {
+	{
 		if (std::strlen(line.c_str()) > 0)
 		{
 			temp.push_back(std::vector<double>());
@@ -230,7 +230,7 @@ void Load2D(std::string filename, ManagedArray& input, ManagedArray& output, con
 			if (tokens > 0)
 				examples++;
 		}
-    }
+	}
 
 	auto sizey = (int)temp.size();
 	auto sizex = (int)temp[0].size();
@@ -251,6 +251,80 @@ void Load2D(std::string filename, ManagedArray& input, ManagedArray& output, con
 				input(x, y) = temp[y][x];
 				
 			output(y) = category;
+		}
+	}
+	
+	file.close();
+}
+
+void Load2D(std::string filename, ManagedArray& input, const char* delimiter, int features, int& samples)
+{
+	auto temp = std::vector<std::vector<double>>();
+
+	std::ifstream file(filename);
+	std::string line;
+	
+	samples = 0;
+	
+	while (std::getline(file, line))
+	{
+		if (std::strlen(line.c_str()) > 0)
+		{
+			temp.push_back(std::vector<double>());
+			
+			auto current_line = strdup(line.c_str());
+			
+			char* next_token = NULL;
+
+			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+			
+				auto token = std::strtok_s(current_line, delimiter, &next_token);
+			
+			#else
+			
+				auto token = std::strtok(current_line, delimiter);
+			
+			#endif
+			
+			int tokens = 0;
+			
+			while (token != NULL)
+			{
+				tokens++;
+				
+				auto value = atof(token);
+				
+				temp[samples].push_back(value);
+				
+				#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+				
+					token = std::strtok_s(NULL, delimiter, &next_token);
+				
+				#else
+			
+					token = strtok(NULL, delimiter);
+			
+				#endif
+			}
+		
+			free(current_line);
+		
+			if (tokens > 0 && tokens >= features)
+				samples++;
+		}
+	}
+
+	auto sizey = (int)temp.size();
+	auto sizex = (int)temp[0].size();
+
+	input.Resize(features, sizey, false);
+	
+	for (auto y = 0; y < sizey; y++)
+	{
+		for (auto x = 0; x < sizex; x++)
+		{
+			if (x >= 0 && x < features && (int)temp[y].size() >= features)
+				input(x, y) = temp[y][x];
 		}
 	}
 	
@@ -291,17 +365,17 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 				
 				model.GetNormalization(input);
 				
-				printf("\nTraining Model...\n");
+				fprintf(stderr, "\nTraining Model...\n");
 				
 				model.Train(input, output, c, kernel, params, tolerance, passes, category);
 				
-				printf("Training Done\n");
+				fprintf(stderr, "Training Done\n");
 
-				printf("elapsed time is %ld ms\n", Profiler::Elapsed(start));
+				fprintf(stderr, "elapsed time is %ld ms\n", Profiler::Elapsed(start));
 
 				if (save && std::strlen(SaveJSON.c_str()) > 0)
 				{
-					printf("\nSaving Model Parameters\n");
+					fprintf(stderr, "\nSaving Model Parameters\n");
 
 					ManagedFile::SaveJSON(SaveDirectory.empty() ? BaseDirectory : SaveDirectory, SaveJSON, ManagedUtil::Serialize(model));
 				}
@@ -334,7 +408,7 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 				
 				auto done = false;
 				
-				printf("\nTraining Models...\n");
+				fprintf(stderr, "\nTraining Models...\n");
 				
 				while (!done)
 				{
@@ -344,22 +418,22 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 					{
 						auto result = models[i].Step();
 					
-						if (result && !models[i].Trained) {
-
-                        	models[i].Generate();
-                    	}
+						if (result && !models[i].Trained)
+						{
+							models[i].Generate();
+						}
 						
 						done &= result;
 					}
 				}
 				
-				printf("Training Done\n");
+				fprintf(stderr, "Training Done\n");
 				
-				printf("elapsed time is %ld ms\n", Profiler::Elapsed(start));
+				fprintf(stderr, "elapsed time is %ld ms\n", Profiler::Elapsed(start));
 				
 				if (save && std::strlen(SaveJSON.c_str()) > 0)
 				{
-					printf("\nSaving Model Parameters\n");
+					fprintf(stderr, "\nSaving Model Parameters\n");
 
 					ManagedFile::SaveJSON(SaveDirectory.empty() ? BaseDirectory : SaveDirectory, SaveJSON, ManagedUtil::Serialize(models));
 				}
@@ -378,15 +452,81 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 	}
 }
 
+void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int Features, bool save, std::string SaveDirectory, std::string SaveJSON)
+{
+	std::string BaseDirectory = "./";
+	
+	if (std::strlen(InputData.c_str()) > 0)
+	{
+		auto Samples = 0;
+		
+		auto input = ManagedArray();
+		
+		Load2D(InputData, input, delimiter == 0 ? "\t" : ",", Features, Samples);
+		
+		fprintf(stderr, "\n%d lines read with %d features\n", Samples, Features);
+		
+		if (Features > 0 && Samples > 0)
+		{
+			auto models = ManagedUtil::Deserialize(ModelFile);
+			auto prediction = ManagedArray(1, Samples);
+			auto classification = ManagedIntList(Samples);
+			ManagedOps::Set(classification, 0);
+
+			fprintf(stderr, "\nClassifying input data...\n");
+			
+			auto start = Profiler::now();
+
+			for (auto i = 0; i < (int)models.size(); i++)
+			{
+				fprintf(stderr, "\nUsing model %d...\n", i + 1);
+
+				auto p = models[i].Predict(input);
+
+				for (auto y = 0; y < p.Length(); y++)
+				{
+					if (p(y) > prediction(y))
+					{
+						prediction(y) = p(y);
+						classification(y) = models[i].Category;
+					}
+				}
+
+				ManagedOps::Free(p);
+
+				models[i].Free();
+			}
+
+			fprintf(stderr, "\nClassification:\n");
+			ManagedMatrix::PrintList(classification, true);
+			
+			fprintf(stderr, "\nClassification Done\n");
+			fprintf(stderr, "elapsed time is %ld ms\n", Profiler::Elapsed(start));
+
+			ManagedOps::Free(prediction);
+			ManagedOps::Free(classification);
+		}
+		
+		ManagedOps::Free(input);
+	}
+}
+
 int main(int argc, char** argv)
 {
+	// Training
 	auto passes = 5;
 	auto c = 1.0;
 	auto tolerance = 0.0001;
 	auto type = KernelType::UNKNOWN;
 	auto category = 0;
-	auto save = false;
 	std::vector<double> parameters;
+
+	// Prediction
+	auto predict = false;
+	auto features = 0;
+
+	// Files	
+	auto save = false;
 	
 	char SaveDirectory[200];
 	SaveDirectory[0] = '\0';
@@ -399,6 +539,9 @@ int main(int argc, char** argv)
 	char InputData[200];
 	InputData[0] = '\0';
 	
+	char ModelFile[200];
+	ModelFile[0] = '\0';
+
 	int delimiter = 0;
 
 	for (auto i = 0; i < argc; i++)
@@ -454,7 +597,11 @@ int main(int argc, char** argv)
 		{
 			delimiter = 1;
 		}
-		
+		else if (!arg.compare("/PREDICT"))
+		{
+			predict = true;
+		}
+
 		if (!arg.compare(0, 9, "/SAVEDIR=") && arg.length() > 9)
 		{
 			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
@@ -494,8 +641,22 @@ int main(int argc, char** argv)
 			#endif
 		}
 
+		if (!arg.compare(0, 7, "/MODEL=") && arg.length() > 7)
+		{
+			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+			
+			strncpy_s(ModelFile, &argv[i][7], sizeof(ModelFile));
+
+			#else
+				
+				strncpy(ModelFile, &argv[i][7], sizeof(ModelFile));
+
+			#endif
+		}
+
 		ParseInt(arg, "/PASSES=", "Max # of passes", passes);
 		ParseInt(arg, "/CATEGORY=", "Category", category);
+		ParseInt(arg, "/FEATURES=", "# features per data point", features);
 		ParseDouble(arg, "/TOLERANCE=", "Error tolerance", tolerance);
 		ParseDouble(arg, "/C=", "Regularization constant", c);
 		ParseDoubles(arg, "/PARAMETERS=", "Kernel Parameters", parameters);
@@ -522,7 +683,19 @@ int main(int argc, char** argv)
 		fprintf(stderr, "Input training data: %s\n", InputData);
 	}
 	
-	SVMTrainer(InputData, delimiter, type, parameters, category, c, passes, tolerance, save, SaveDirectory, SaveJSON);
+	if (strlen(ModelFile) > 0)
+	{
+		fprintf(stderr, "Model File: %s\n", ModelFile);
+	}
+
+	if (predict)
+	{
+		SVMPredict(InputData, ModelFile, delimiter, features, save, SaveDirectory, SaveJSON);
+	}
+	else
+	{
+		SVMTrainer(InputData, delimiter, type, parameters, category, c, passes, tolerance, save, SaveDirectory, SaveJSON);
+	}
 		
 	return 0;
 }

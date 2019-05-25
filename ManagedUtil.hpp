@@ -248,17 +248,23 @@ public:
 			{
 				for (auto i = 0; i < (int)j["Models"].size(); i++)
 				{
-					auto x = Parse2D(j["Models"][i], "ModelX");
-					auto y = Parse1D(j["Models"][i], "ModelY");
-					auto type = static_cast<KernelType>((int)j["Models"][i]["Type"]);
-					auto kernelParam = Parse1D(j["Models"][i], "KernelParam");
-					auto alpha = Parse1D(j["Models"][i], "Alpha");
-					auto w = Parse1D(j["Models"][i], "W");
-					auto b = (double)j["Models"][i]["B"];
-					auto c = (double)j["Models"][i]["C"];
-					auto tolerance = (double)j["Models"][i]["Tolerance"];
-					auto category = (int)j["Models"][i]["Category"];
-					auto passes = (int)j["Models"][i]["Passes"];
+					auto m = j["Models"][i];
+
+					auto x = Parse2D(m, "ModelX");
+					auto y = Parse1D(m, "ModelY");
+					auto type = static_cast<KernelType>((int)m["Type"]);
+					auto kernelParam = Parse1D(m, "KernelParam");
+					auto alpha = Parse1D(m, "Alpha");
+					auto w = Parse1D(m, "W");
+					auto b = (double)m["B"];
+					auto c = (double)m["C"];
+					auto tolerance = (double)m["Tolerance"];
+					auto category = (int)m["Category"];
+					auto passes = (int)m["Passes"];
+
+					y.Reshape(1, y.Length());
+					w.Reshape(1, w.Length());
+					alpha.Reshape(1, alpha.Length());
 
 					auto model = Model(x, y, type, kernelParam, alpha, w, b, c, tolerance, category, passes);
 
@@ -266,12 +272,6 @@ public:
 					model.Max = Vector1D(j, "Normalization", 1);
 
 					models.push_back(model);
-
-					ManagedOps::Free(x);
-					ManagedOps::Free(y);
-					ManagedOps::Free(kernelParam);
-					ManagedOps::Free(alpha);
-					ManagedOps::Free(w);
 				}
 			}
 		}
