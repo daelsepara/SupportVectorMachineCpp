@@ -452,7 +452,7 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 	}
 }
 
-void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int Features, bool save, std::string SaveDirectory, std::string SaveJSON)
+void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int Features, bool save, std::string SaveDirectory, std::string ClassificationFile)
 {
 	std::string BaseDirectory = "./";
 	
@@ -503,6 +503,11 @@ void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int
 			fprintf(stderr, "\nClassification Done\n");
 			fprintf(stderr, "elapsed time is %ld ms\n", Profiler::Elapsed(start));
 
+			if (save && std::strlen(ClassificationFile.c_str()) > 0)
+			{
+				ManagedFile::SaveClassification(SaveDirectory.empty() ? BaseDirectory : SaveDirectory, ClassificationFile, classification);
+			}
+
 			ManagedOps::Free(prediction);
 			ManagedOps::Free(classification);
 		}
@@ -541,6 +546,9 @@ int main(int argc, char** argv)
 	
 	char ModelFile[200];
 	ModelFile[0] = '\0';
+
+	char ClassificationFile[200];
+	ClassificationFile[0] = '\0';
 
 	int delimiter = 0;
 
@@ -654,6 +662,19 @@ int main(int argc, char** argv)
 			#endif
 		}
 
+		if (!arg.compare(0, 5, "/TXT=") && arg.length() > 5)
+		{
+			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+			
+			strncpy_s(ClassificationFile, &argv[i][5], sizeof(ClassificationFile));
+
+			#else
+				
+				strncpy(ClassificationFile, &argv[i][5], sizeof(ClassificationFile));
+
+			#endif
+		}
+
 		ParseInt(arg, "/PASSES=", "Max # of passes", passes);
 		ParseInt(arg, "/CATEGORY=", "Category", category);
 		ParseInt(arg, "/FEATURES=", "# features per data point", features);
@@ -675,22 +696,32 @@ int main(int argc, char** argv)
 
 		#endif
 
-		fprintf(stderr, "Save Directory: %s\n", SaveDirectory);
+		fprintf(stderr, "... Save Directory: %s\n", SaveDirectory);
 	}
 	
 	if (strlen(InputData) > 0)
 	{
-		fprintf(stderr, "Input training data: %s\n", InputData);
+		fprintf(stderr, "... Input training data: %s\n", InputData);
 	}
 	
 	if (strlen(ModelFile) > 0)
 	{
-		fprintf(stderr, "Model File: %s\n", ModelFile);
+		fprintf(stderr, "... Model File: %s\n", ModelFile);
+	}
+
+	if (strlen(SaveJSON) > 0)
+	{
+		fprintf(stderr, "... JSON File: %s.json\n", SaveJSON);
+	}
+
+	if (strlen(ClassificationFile) > 0)
+	{
+		fprintf(stderr, "... Classification File: %s.txt\n", ClassificationFile);
 	}
 
 	if (predict)
 	{
-		SVMPredict(InputData, ModelFile, delimiter, features, save, SaveDirectory, SaveJSON);
+		SVMPredict(InputData, ModelFile, delimiter, features, save, SaveDirectory, ClassificationFile);
 	}
 	else
 	{
