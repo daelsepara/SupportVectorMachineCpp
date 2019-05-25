@@ -52,16 +52,21 @@ public:
 
 	}
 
-	Model(ManagedArray& x, ManagedArray& y, KernelType type, ManagedArray& kernelParam, ManagedArray& alpha, double b, ManagedArray& w, int passes)
+	Model(ManagedArray& x, ManagedArray& y, KernelType type, ManagedArray& kernelParam, ManagedArray& alpha, ManagedArray& w, double b, double c, double tolerance, int category, int passes)
 	{
 		ModelX = x;
 		ModelY = y;
 		Type = type;
 		KernelParam = kernelParam;
 		Alpha = alpha;
-		B = b;
 		W = w;
+		B = b;
+		C = c;
+		Tolerance = tolerance;
+		Category = category;
 		Passes = passes;
+		MaxIterations = passes;
+		Iterations = passes;
 		Trained = true;
 	}
 

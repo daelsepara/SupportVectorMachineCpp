@@ -231,5 +231,52 @@ public:
 
 		return j.dump();
 	}
+
+	static std::vector<Model> Deserialize(std::string file_name)
+	{
+		auto models = std::vector<Model>();
+
+		std::ifstream ifs(file_name);
+
+		if (ifs.good())
+		{
+			json j = json::parse(ifs);
+			
+			ifs.close();
+
+			if (j["Models"].size() > 0)
+			{
+				for (auto i = 0; i < (int)j["Models"].size(); i++)
+				{
+					auto x = Parse2D(j["Models"][i], "ModelX");
+					auto y = Parse1D(j["Models"][i], "ModelY");
+					auto type = static_cast<KernelType>((int)j["Models"][i]["Type"]);
+					auto kernelParam = Parse1D(j["Models"][i], "KernelParam");
+					auto alpha = Parse1D(j["Models"][i], "Alpha");
+					auto w = Parse1D(j["Models"][i], "W");
+					auto b = (double)j["Models"][i]["B"];
+					auto c = (double)j["Models"][i]["C"];
+					auto tolerance = (double)j["Models"][i]["Tolerance"];
+					auto category = (int)j["Models"][i]["Category"];
+					auto passes = (int)j["Models"][i]["Passes"];
+
+					auto model = Model(x, y, type, kernelParam, alpha, w, b, c, tolerance, category, passes);
+
+					model.Min = Vector1D(j, "Normalization", 0);
+					model.Max = Vector1D(j, "Normalization", 1);
+
+					models.push_back(model);
+
+					ManagedOps::Free(x);
+					ManagedOps::Free(y);
+					ManagedOps::Free(kernelParam);
+					ManagedOps::Free(alpha);
+					ManagedOps::Free(w);
+				}
+			}
+		}
+
+		return models;
+	}
 };
 #endif
