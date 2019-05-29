@@ -1,9 +1,6 @@
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
-#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -25,7 +22,7 @@
 
 void ParseInt(std::string arg, const char* str, const char* var, int& dst)
 {
-	auto len = strlen(str);
+	auto len = std::string(str).length();
 
 	if (len > 0)
 	{
@@ -50,7 +47,7 @@ void ParseInt(std::string arg, const char* str, const char* var, int& dst)
 
 void ParseInts(std::string arg, const char* str, const char* var, std::vector<int> & ints)
 {
-	auto len = strlen(str);
+	auto len = std::string(str).length();
 
 	if (len > 0)
 	{
@@ -91,7 +88,7 @@ void ParseInts(std::string arg, const char* str, const char* var, std::vector<in
 
 void ParseDouble(std::string arg, const char* str, const char* var, double& dst)
 {
-	auto len = strlen(str);
+	auto len = std::string(str).length();
 
 	if (len > 0)
 	{
@@ -117,7 +114,7 @@ void ParseDouble(std::string arg, const char* str, const char* var, double& dst)
 
 void ParseDoubles(std::string arg, const char* str, const char* var, std::vector<double>& doubles)
 {
-	auto len = strlen(str);
+	auto len = std::string(str).length();
 
 	if (len > 0)
 	{
@@ -186,7 +183,7 @@ void Load2D(std::string filename, ManagedArray& input, ManagedArray& output, con
 	
 	while (std::getline(file, line))
 	{
-		if (std::strlen(line.c_str()) > 0)
+		if (line.length() > 0)
 		{
 			temp.push_back(std::vector<double>());
 			
@@ -249,7 +246,7 @@ void Load2D(std::string filename, ManagedArray& input, const char* delimiter, in
 	
 	while (std::getline(file, line))
 	{
-		if (std::strlen(line.c_str()) > 0)
+		if (line.length() > 0)
 		{
 			temp.push_back(std::vector<double>());
 			
@@ -297,7 +294,7 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 {
 	std::string BaseDirectory = "./";
 	
-	if (std::strlen(InputData.c_str()) > 0)
+	if (InputData.length() > 0)
 	{
 		auto Inputs = 0;
 		auto Categories = 0;
@@ -335,7 +332,7 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 				
 				std::cerr << "elapsed time is " << Profiler::Elapsed(start) << " ms" << std::endl;
 
-				if (save && std::strlen(SaveJSON.c_str()) > 0)
+				if (save && SaveJSON.length() > 0)
 				{
 					std::cerr << std::endl << "Saving Model Parameters" << std::endl;
 
@@ -393,7 +390,7 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 				
 				std::cerr << "elapsed time is " << Profiler::Elapsed(start) << " ms" << std::endl;
 				
-				if (save && std::strlen(SaveJSON.c_str()) > 0)
+				if (save && SaveJSON.length() > 0)
 				{
 					std::cerr << std::endl << "Saving Model Parameters" << std::endl;
 
@@ -418,7 +415,7 @@ void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int
 {
 	std::string BaseDirectory = "./";
 	
-	if (std::strlen(InputData.c_str()) > 0)
+	if (InputData.length() > 0)
 	{
 		auto Samples = 0;
 		
@@ -465,7 +462,7 @@ void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int
 			std::cerr << std::endl << "Classification Done:" << std::endl;
 			std::cerr << "elapsed time is " << Profiler::Elapsed(start) << " ms" << std::endl;
 
-			if (save && std::strlen(ClassificationFile.c_str()) > 0)
+			if (save && ClassificationFile.length() > 0)
 			{
 				std::cerr << std::endl << "Saving classification results" << std::endl;
 				
@@ -607,7 +604,7 @@ int main(int argc, char** argv)
 		ParseDoubles(arg, "/PARAMETERS=", "Kernel Parameters", parameters);
 	}
 
-	if (strlen(SaveDirectory) > 0 && save)
+	if (std::string(SaveDirectory).length() > 0 && save)
 	{
 
 		#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
@@ -623,33 +620,33 @@ int main(int argc, char** argv)
 		std::cerr << "... Save Directory: " << SaveDirectory << std::endl;
 	}
 	
-	if (strlen(InputData) > 0)
+	if (std::string(InputData).length() > 0)
 	{
 		std::cerr << "... Input training data: " << InputData << std::endl;
 	}
 	
-	if (strlen(ModelFile) > 0)
+	if (std::string(ModelFile).length() > 0)
 	{
 		std::cerr << "... Model File: " << ModelFile << std::endl;
 	}
 
-	if (strlen(SaveJSON) > 0)
+	if (std::string(SaveJSON).length() > 0)
 	{
 		std::cerr << "... JSON File: " << SaveJSON << ".json" << std::endl;
 	}
 
-	if (strlen(ClassificationFile) > 0)
+	if (std::string(ClassificationFile).length() > 0)
 	{
 		std::cerr << "... Classification File: " << ClassificationFile << ".txt" << std::endl;
 	}
 
 	if (predict)
 	{
-		SVMPredict(InputData, ModelFile, delimiter, features, save, SaveDirectory, ClassificationFile);
+		SVMPredict(InputData, ModelFile, delimiter, features, save, SaveDir, ClassificationFile);
 	}
 	else
 	{
-		SVMTrainer(InputData, delimiter, type, parameters, category, c, passes, tolerance, save, SaveDirectory, SaveJSON);
+		SVMTrainer(InputData, delimiter, type, parameters, category, c, passes, tolerance, save, SaveDir, SaveJSON);
 	}
 		
 	return 0;
