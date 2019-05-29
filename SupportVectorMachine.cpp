@@ -33,22 +33,22 @@ void ParseInt(std::string arg, const char* str, const char* var, int& dst)
 		{
 			try
 			{
-				auto val = stoi(arg.substr(len));
+				auto val = std::stoi(arg.substr(len));
 
-				fprintf(stderr, "... %s = %d\n", var, val);
+				std::cerr << "... " << var << " = " << val << std::endl;
 
 				dst = val;
 			}
-			catch (const std::invalid_argument& ia)
+			catch (const std::invalid_argument & ia)
 			{
-				fprintf(stderr, "... %s = NaN %s\n", var, ia.what());
+				std::cerr << "... " << var << " = NaN " << ia.what() << std::endl;
 				exit(1);
 			}
 		}
 	}
 }
 
-void ParseInts(std::string arg, const char* str, const char* var, std::vector<int>& ints)
+void ParseInts(std::string arg, const char* str, const char* var, std::vector<int> & ints)
 {
 	auto len = strlen(str);
 
@@ -66,7 +66,7 @@ void ParseInts(std::string arg, const char* str, const char* var, std::vector<in
 
 				while ((pos = s.find(delimiter)) != std::string::npos) {
 
-					auto val = stoi(s.substr(0, pos));
+					auto val = std::stoi(s.substr(0, pos));
 
 					ints.push_back(val);
 
@@ -75,14 +75,14 @@ void ParseInts(std::string arg, const char* str, const char* var, std::vector<in
 
 				if (s.length() > 0)
 				{
-					auto val = stoi(s.substr(0, pos));
+					auto val = std::stoi(s.substr(0, pos));
 
 					ints.push_back(val);
 				}
 			}
-			catch (const std::invalid_argument& ia)
+			catch (const std::invalid_argument & ia)
 			{
-				fprintf(stderr, "... %s = NaN %s\n", var, ia.what());
+				std::cerr << "... " << var << " = NaN " << ia.what() << std::endl;
 				exit(1);
 			}
 		}
@@ -99,15 +99,15 @@ void ParseDouble(std::string arg, const char* str, const char* var, double& dst)
 		{
 			try
 			{
-				auto val = stod(arg.substr(len));
+				auto val = std::stod(arg.substr(len));
 
-				fprintf(stderr, "... %s = %e\n", var, val);
+				std::cerr << "... " << var << " = " << std::scientific << val << std::endl;
 
 				dst = val;
 			}
-			catch (const std::invalid_argument& ia)
+			catch (const std::invalid_argument & ia)
 			{
-				fprintf(stderr, "... %s = NaN %s\n", var, ia.what());
+				std::cerr << "... " << var << " = NaN " << ia.what() << std::endl;
 
 				exit(1);
 			}
@@ -149,24 +149,24 @@ void ParseDoubles(std::string arg, const char* str, const char* var, std::vector
 				
 				if (!doubles.empty())
 				{
-					std::cout << "... " << var << " = ";
+					std::cerr << "... " << var << " = ";
 					
 					// Convert all but the last element to avoid a trailing ","
 					for (auto i = 0; i < doubles.size(); i++)
 					{
 						if (i > 0)
-							std::cout << ", ";
+							std::cerr << ", ";
 						
-						std::cout << doubles[i];
+						std::cerr << doubles[i];
 					}
 					
 					// Now add the last element with no delimiter
-					std::cout << std::endl;
+					std::cerr << std::endl;
 				}
 			}
 			catch (const std::invalid_argument& ia)
 			{
-				fprintf(stderr, "... %s = NaN %s\n", var, ia.what());
+				std::cerr << "... " << var << " = NaN " << ia.what() << std::endl;
 				exit(1);
 			}
 		}
@@ -192,37 +192,18 @@ void Load2D(std::string filename, ManagedArray& input, ManagedArray& output, con
 			
 			auto current_line = strdup(line.c_str());
 			
-			char* next_token = NULL;
-
-			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-			
-				auto token = std::strtok_s(current_line, delimiter, &next_token);
-			
-			#else
-			
-				auto token = std::strtok(current_line, delimiter);
-			
-			#endif
+			std::istringstream is(current_line);
+			std::string token;
 			
 			int tokens = 0;
-			
-			while (token != NULL)
+
+			while (std::getline(is, token, delimiter[0]))
 			{
 				tokens++;
 				
-				auto value = atof(token);
+				auto value = std::stod(token);
 				
 				temp[examples].push_back(value);
-				
-				#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-				
-					token = std::strtok_s(NULL, delimiter, &next_token);
-				
-				#else
-			
-					token = strtok(NULL, delimiter);
-			
-				#endif
 			}
 		
 			free(current_line);
@@ -274,37 +255,18 @@ void Load2D(std::string filename, ManagedArray& input, const char* delimiter, in
 			
 			auto current_line = strdup(line.c_str());
 			
-			char* next_token = NULL;
-
-			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-			
-				auto token = std::strtok_s(current_line, delimiter, &next_token);
-			
-			#else
-			
-				auto token = std::strtok(current_line, delimiter);
-			
-			#endif
+			std::istringstream is(current_line);
+			std::string token;
 			
 			int tokens = 0;
-			
-			while (token != NULL)
+
+			while (std::getline(is, token, delimiter[0]))
 			{
 				tokens++;
 				
-				auto value = atof(token);
+				auto value = std::stod(token);
 				
 				temp[samples].push_back(value);
-				
-				#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-				
-					token = std::strtok_s(NULL, delimiter, &next_token);
-				
-				#else
-			
-					token = strtok(NULL, delimiter);
-			
-				#endif
 			}
 		
 			free(current_line);
@@ -346,7 +308,7 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 		
 		Load2D(InputData, input, output, delimiter == 0 ? "\t" : ",", Inputs, Categories, Examples);
 		
-		fprintf(stderr, "\n%d lines read with %d inputs and %d categories\n", Examples, Inputs, Categories);
+		std::cerr << std::endl << Examples <<" lines read with " << Inputs <<" inputs and " << Categories << " categories" << std::endl;
 		
 		if (Inputs > 0 && Categories > 0 && Examples > 0 && kernel != KernelType::UNKNOWN)
 		{
@@ -365,17 +327,17 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 				
 				model.GetNormalization(input);
 				
-				fprintf(stderr, "\nTraining Model...\n");
+				std::cerr << std::endl << "Training Model..." << std::endl;
 				
 				model.Train(input, output, c, kernel, params, tolerance, passes, category);
 				
-				fprintf(stderr, "Training Done\n");
-
-				fprintf(stderr, "elapsed time is %ld ms\n", Profiler::Elapsed(start));
+				std::cerr << "Training Done" << std::endl;
+				
+				std::cerr << "elapsed time is " << Profiler::Elapsed(start) << " ms" << std::endl;
 
 				if (save && std::strlen(SaveJSON.c_str()) > 0)
 				{
-					fprintf(stderr, "\nSaving Model Parameters\n");
+					std::cerr << std::endl << "Saving Model Parameters" << std::endl;
 
 					ManagedFile::SaveJSON(SaveDirectory.empty() ? BaseDirectory : SaveDirectory, SaveJSON, ManagedUtil::Serialize(model));
 				}
@@ -408,7 +370,7 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 				
 				auto done = false;
 				
-				fprintf(stderr, "\nTraining Models...\n");
+				std::cerr << std::endl << "Training Models..." << std::endl;
 				
 				while (!done)
 				{
@@ -427,13 +389,13 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 					}
 				}
 				
-				fprintf(stderr, "Training Done\n");
+				std::cerr << "Training Done" << std::endl;
 				
-				fprintf(stderr, "elapsed time is %ld ms\n", Profiler::Elapsed(start));
+				std::cerr << "elapsed time is " << Profiler::Elapsed(start) << " ms" << std::endl;
 				
 				if (save && std::strlen(SaveJSON.c_str()) > 0)
 				{
-					fprintf(stderr, "\nSaving Model Parameters\n");
+					std::cerr << std::endl << "Saving Model Parameters" << std::endl;
 
 					ManagedFile::SaveJSON(SaveDirectory.empty() ? BaseDirectory : SaveDirectory, SaveJSON, ManagedUtil::Serialize(models));
 				}
@@ -464,7 +426,7 @@ void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int
 		
 		Load2D(InputData, input, delimiter == 0 ? "\t" : ",", Features, Samples);
 		
-		fprintf(stderr, "\n%d lines read with %d features\n", Samples, Features);
+		std::cerr << std::endl << Samples <<" lines read with " << Features << " features" << std::endl;
 		
 		if (Features > 0 && Samples > 0)
 		{
@@ -473,13 +435,13 @@ void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int
 			auto classification = ManagedIntList(Samples);
 			ManagedOps::Set(classification, 0);
 
-			fprintf(stderr, "\nClassifying input data...\n");
+			std::cerr << std::endl << "Classifying input data..." << std::endl;
 			
 			auto start = Profiler::now();
 
 			for (auto i = 0; i < (int)models.size(); i++)
 			{
-				fprintf(stderr, "\nUsing model %d...\n", i + 1);
+				std::cerr << std::endl << "Using model " << (i + 1) << "..." << std::endl;
 
 				auto p = models[i].Predict(input);
 
@@ -496,15 +458,17 @@ void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int
 
 				models[i].Free();
 			}
-
-			fprintf(stderr, "\nClassification:\n");
+			
+			std::cerr << std::endl << "Classification:" << std::endl;
 			ManagedMatrix::PrintList(classification, true);
 			
-			fprintf(stderr, "\nClassification Done\n");
-			fprintf(stderr, "elapsed time is %ld ms\n", Profiler::Elapsed(start));
+			std::cerr << std::endl << "Classification Done:" << std::endl;
+			std::cerr << "elapsed time is " << Profiler::Elapsed(start) << " ms" << std::endl;
 
 			if (save && std::strlen(ClassificationFile.c_str()) > 0)
 			{
+				std::cerr << std::endl << "Saving classification results" << std::endl;
+				
 				ManagedFile::SaveClassification(SaveDirectory.empty() ? BaseDirectory : SaveDirectory, ClassificationFile, classification);
 			}
 
@@ -565,37 +529,37 @@ int main(int argc, char** argv)
 		{
 			type = KernelType::POLYNOMIAL;
 			
-			fprintf(stderr, "... Kernel type = Polynomial\n");
+			std::cerr << "... Kernel type = Polynomial" << std::endl;
 		}
 		else if (!arg.compare("/GAUSSIAN"))
 		{
 			type = KernelType::GAUSSIAN;
 			
-			fprintf(stderr, "... Kernel type = Gaussian\n");
+			std::cerr << "... Kernel type = Gaussian" << std::endl;
 		}
 		else if (!arg.compare("/RADIAL"))
 		{
 			type = KernelType::RADIAL;
 			
-			fprintf(stderr, "... Kernel type = Radial basis functions\n");
+			std::cerr << "... Kernel type = Radial basis functions" << std::endl;
 		}
 		else if (!arg.compare("/SIGMOID"))
 		{
 			type = KernelType::SIGMOID;
 			
-			fprintf(stderr, "... Kernel type = Sigmoid\n");
+			std::cerr << "... Kernel type = Sigmoid" << std::endl;
 		}
 		else if (!arg.compare("/LINEAR"))
 		{
 			type = KernelType::LINEAR;
 			
-			fprintf(stderr, "... Kernel type = Linear\n");
+			std::cerr << "... Kernel type = Linear" << std::endl;
 		}
 		else if (!arg.compare("/FOURIER"))
 		{
 			type = KernelType::FOURIER;
 			
-			fprintf(stderr, "... Kernel type = Fourier basic functions\n");
+			std::cerr << "... Kernel type = Fourier basis functions" << std::endl;
 		}
 		else if (!arg.compare("/TAB"))
 		{
@@ -612,67 +576,27 @@ int main(int argc, char** argv)
 
 		if (!arg.compare(0, 9, "/SAVEDIR=") && arg.length() > 9)
 		{
-			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-
-				strncpy_s(SaveDirectory, &argv[i][9], sizeof(SaveDirectory));
-			
-			#else
-
-				strncpy(SaveDirectory, &argv[i][9], sizeof(SaveDirectory));
-
-			#endif
+			std::copy(&argv[i][9], &argv[i][9] + sizeof(SaveDirectory), SaveDirectory);
 		}
 
 		if (!arg.compare(0, 6, "/JSON=") && arg.length() > 6)
 		{
-			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-			
-			strncpy_s(SaveJSON, &argv[i][6], sizeof(SaveJSON));
-
-			#else
-				
-				strncpy(SaveJSON, &argv[i][6], sizeof(SaveJSON));
-
-			#endif
+			std::copy(&argv[i][6], &argv[i][6] + sizeof(SaveJSON), SaveJSON);
 		}
 		
 		if (!arg.compare(0, 7, "/INPUT=") && arg.length() > 7)
 		{
-			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-			
-			strncpy_s(InputData, &argv[i][7], sizeof(InputData));
-
-			#else
-				
-				strncpy(InputData, &argv[i][7], sizeof(InputData));
-
-			#endif
+			std::copy(&argv[i][7], &argv[i][7] + sizeof(InputData), InputData);
 		}
 
 		if (!arg.compare(0, 7, "/MODEL=") && arg.length() > 7)
 		{
-			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-			
-			strncpy_s(ModelFile, &argv[i][7], sizeof(ModelFile));
-
-			#else
-				
-				strncpy(ModelFile, &argv[i][7], sizeof(ModelFile));
-
-			#endif
+			std::copy(&argv[i][7], &argv[i][7] + sizeof(ModelFile), ModelFile);
 		}
 
 		if (!arg.compare(0, 5, "/TXT=") && arg.length() > 5)
 		{
-			#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-			
-			strncpy_s(ClassificationFile, &argv[i][5], sizeof(ClassificationFile));
-
-			#else
-				
-				strncpy(ClassificationFile, &argv[i][5], sizeof(ClassificationFile));
-
-			#endif
+			std::copy(&argv[i][5], &argv[i][5] + sizeof(ClassificationFile), ClassificationFile);
 		}
 
 		ParseInt(arg, "/PASSES=", "Max # of passes", passes);
@@ -696,27 +620,27 @@ int main(int argc, char** argv)
 
 		#endif
 
-		fprintf(stderr, "... Save Directory: %s\n", SaveDirectory);
+		std::cerr << "... Save Directory: " << SaveDirectory << std::endl;
 	}
 	
 	if (strlen(InputData) > 0)
 	{
-		fprintf(stderr, "... Input training data: %s\n", InputData);
+		std::cerr << "... Input training data: " << InputData << std::endl;
 	}
 	
 	if (strlen(ModelFile) > 0)
 	{
-		fprintf(stderr, "... Model File: %s\n", ModelFile);
+		std::cerr << "... Model File: " << ModelFile << std::endl;
 	}
 
 	if (strlen(SaveJSON) > 0)
 	{
-		fprintf(stderr, "... JSON File: %s.json\n", SaveJSON);
+		std::cerr << "... JSON File: " << SaveJSON << ".json" << std::endl;
 	}
 
 	if (strlen(ClassificationFile) > 0)
 	{
-		fprintf(stderr, "... Classification File: %s.txt\n", ClassificationFile);
+		std::cerr << "... Classification File: " << ClassificationFile << ".txt" << std::endl;
 	}
 
 	if (predict)
