@@ -24,7 +24,7 @@ private:
 	double H = 0.0;
 	double L = 0.0;
 	KernelType ktype = KernelType::UNKNOWN;
-        
+
 public:
 
 	ManagedArray ModelX = NULL;
@@ -41,12 +41,12 @@ public:
 	int Iterations = 0;
 	int MaxIterations = 5;
 	bool Trained = false;
-	
+
 	std::vector<double> Min;
 	std::vector<double> Max;
-	
+
 	Random random = Random();
-	
+
 	Model()
 	{
 
@@ -79,12 +79,12 @@ public:
 	{
 		return x.x;
 	}
-	
+
 	void Setup(ManagedArray& x, ManagedArray& y, double c, KernelType kernel, ManagedArray& param, double tolerance = 0.001, int maxpasses = 5, int category = 1)
 	{
 		ManagedOps::Free(dx);
 		ManagedOps::Free(dy);
-		
+
 		dx = ManagedArray(x.x, x.y);
 		dy = ManagedArray(y.x, y.y);
 
@@ -209,10 +209,10 @@ public:
 		{
 			dy(i) = (int)dy(i) != Category ? -1 : 1;
 		}
-		
+
 		random.UniformDistribution();
 	}
-	
+
 	void GetNormalization(ManagedArray& input)
 	{
 		Min.clear();
@@ -235,7 +235,7 @@ public:
 			}
 		}
 	}
-	
+
 	ManagedArray Normalize(ManagedArray& input)
 	{
 		Min.clear();
@@ -306,7 +306,7 @@ public:
 
 		return result;
 	}
-	
+
 	bool Step()
 	{
 		if (Iterations >= MaxIterations)
@@ -355,7 +355,7 @@ public:
 				auto alpha_i_old = alpha(i);
 				auto alpha_j_old = alpha(j);
 
-				// Compute L and H by (10) or (11). 
+				// Compute L and H by (10) or (11).
 				if ((int)dy(i) == (int)dy(j))
 				{
 					L = std::max(0.0, alpha(j) + alpha(i) - C);
@@ -369,7 +369,7 @@ public:
 
 				if (std::abs(L - H) <= std::numeric_limits<double>::epsilon())
 				{
-					// continue to next i 
+					// continue to next i
 					continue;
 				}
 
@@ -378,7 +378,7 @@ public:
 
 				if (eta >= 0)
 				{
-					// continue to next i. 
+					// continue to next i.
 					continue;
 				}
 
@@ -392,21 +392,21 @@ public:
 				// Check if change in alpha is significant
 				if (std::abs(alpha(j) - alpha_j_old) < Tolerance)
 				{
-					// continue to next i. 
+					// continue to next i.
 					// replace anyway
 					alpha(j) = alpha_j_old;
 
 					continue;
 				}
 
-				// Determine value for alpha i using (16). 
+				// Determine value for alpha i using (16).
 				alpha(i) = alpha(i) + dy(i) * dy(j) * (alpha_j_old - alpha(j));
 
-				// Compute b1 and b2 using (17) and (18) respectively. 
+				// Compute b1 and b2 using (17) and (18) respectively.
 				auto b1 = b - E(i) - dy(i) * (alpha(i) - alpha_i_old) * K(j, i) - dy(j) * (alpha(j) - alpha_j_old) * K(j, i);
 				auto b2 = b - E(j) - dy(i) * (alpha(i) - alpha_i_old) * K(j, i) - dy(j) * (alpha(j) - alpha_j_old) * K(j, j);
 
-				// Compute b by (19). 
+				// Compute b by (19).
 				if (0 < alpha(i) && alpha(i) < C)
 				{
 					b = b1;
@@ -435,7 +435,7 @@ public:
 
 		return Iterations >= MaxIterations;
 	}
-	
+
 	void Generate()
 	{
 		auto m = Rows(dx);
@@ -505,21 +505,21 @@ public:
 		ManagedOps::Free(txx);
 	}
 
-	// SVMTRAIN Trains an SVM classifier using a simplified version of the SMO 
+	// SVMTRAIN Trains an SVM classifier using a simplified version of the SMO
 	// algorithm.
 	//
 	// (model) = svm_train(X, Y, C, kernelFunction, kernelParam, tol, max_passes) trains an
-	// SVM classifier and returns trained model. X is the matrix of training 
-	// examples.  Each row is a training example, and the jth column holds the 
-	// jth feature.  Y is a column matrix containing 1 for positive examples 
-	// and 0 for negative examples.  C is the standard SVM regularization 
-	// parameter.  tol is a tolerance value used for determining equality of 
+	// SVM classifier and returns trained model. X is the matrix of training
+	// examples.  Each row is a training example, and the jth column holds the
+	// jth feature.  Y is a column matrix containing 1 for positive examples
+	// and 0 for negative examples.  C is the standard SVM regularization
+	// parameter.  tol is a tolerance value used for determining equality of
 	// floating point numbers. max_passes controls the number of iterations
 	// over the dataset (without changes to alpha) before the algorithm quits.
 	//
 	// Note: This is a simplified version of the SMO algorithm for training
 	// SVMs. In practice, if you want to train an SVM classifier, we
-	// recommend using an optimized package such as:  
+	// recommend using an optimized package such as:
 	//
 	// LIBSVM   (http://www.csie.ntu.edu.tw/~cjlin/libsvm/)
 	// SVMLight (http://svmlight.joachims.org/)
@@ -538,10 +538,10 @@ public:
 	}
 
 	// SVMPREDICT returns a vector of predictions using a trained SVM model
-	//(svm_train). 
+	//(svm_train).
 	//
-	// pred = SVMPREDICT(model, X) returns a vector of predictions using a 
-	// trained SVM model (svm_train). X is a mxn matrix where there each 
+	// pred = SVMPREDICT(model, X) returns a vector of predictions using a
+	// trained SVM model (svm_train). X is a mxn matrix where there each
 	// example is a row. model is a svm model returned from svm_train.
 	// predictions pred is a m x 1 column of predictions of {0, 1} values.
 	//
@@ -598,10 +598,10 @@ public:
 
 				ManagedMatrix::Expand(X1, cols, 1, tempK);
 				ManagedMatrix::Expand(X2, 1, rows, temp1);
-				
+
 				ManagedMatrix::Add(tempK, temp1);
 				ManagedMatrix::Add(tempK, temp2);
-				
+
 				auto sigma = KernelParam.Length() > 0 ? KernelParam(0) : 1;
 
 				if (Type == KernelType::RADIAL)

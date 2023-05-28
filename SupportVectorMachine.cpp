@@ -139,20 +139,20 @@ void ParseDoubles(std::string arg, const char* str, const char* var, std::vector
 
 					doubles.push_back(val);
 				}
-				
+
 				if (!doubles.empty())
 				{
 					std::cerr << "... " << var << " = ";
-					
+
 					// Convert all but the last element to avoid a trailing ","
 					for (auto i = 0; i < doubles.size(); i++)
 					{
 						if (i > 0)
 							std::cerr << ", ";
-						
+
 						std::cerr << doubles[i];
 					}
-					
+
 					// Now add the last element with no delimiter
 					std::cerr << std::endl;
 				}
@@ -172,31 +172,31 @@ void Load2D(std::string filename, ManagedArray& input, ManagedArray& output, con
 
 	std::ifstream file(filename);
 	std::string line;
-	
+
 	categories = 0;
 	inputs = 0;
 	examples = 0;
-	
+
 	while (std::getline(file, line))
 	{
 		if (line.length() > 0)
 		{
 			temp.push_back(std::vector<double>());
-			
+
 			std::istringstream is(line);
 			std::string token;
-			
+
 			int tokens = 0;
 
 			while (std::getline(is, token, delimiter[0]))
 			{
 				tokens++;
-				
+
 				auto value = std::stod(token);
-				
+
 				temp[examples].push_back(value);
 			}
-		
+
 			if (tokens > 0)
 				examples++;
 		}
@@ -208,22 +208,22 @@ void Load2D(std::string filename, ManagedArray& input, ManagedArray& output, con
 
 	input.Resize(inputs, sizey, false);
 	output.Resize(1, sizey, false);
-	
+
 	for (auto y = 0; y < sizey; y++)
 	{
 		for (auto x = 0; x < sizex; x++)
 		{
 			auto category = inputs > 0 ? (int)temp[y][inputs] : 0;
-			
+
 			categories = std::max(categories, category);
-			
+
 			if (x < inputs)
 				input(x, y) = temp[y][x];
-				
+
 			output(y) = category;
 		}
 	}
-	
+
 	file.close();
 }
 
@@ -233,29 +233,29 @@ void Load2D(std::string filename, ManagedArray& input, const char* delimiter, in
 
 	std::ifstream file(filename);
 	std::string line;
-	
+
 	samples = 0;
-	
+
 	while (std::getline(file, line))
 	{
 		if (line.length() > 0)
 		{
 			temp.push_back(std::vector<double>());
-			
+
 			std::istringstream is(line);
 			std::string token;
-			
+
 			int tokens = 0;
 
 			while (std::getline(is, token, delimiter[0]))
 			{
 				tokens++;
-				
+
 				auto value = std::stod(token);
-				
+
 				temp[samples].push_back(value);
 			}
-		
+
 			if (tokens > 0 && tokens >= features)
 				samples++;
 		}
@@ -265,7 +265,7 @@ void Load2D(std::string filename, ManagedArray& input, const char* delimiter, in
 	auto sizex = (int)temp[0].size();
 
 	input.Resize(features, sizey, false);
-	
+
 	for (auto y = 0; y < sizey; y++)
 	{
 		for (auto x = 0; x < sizex; x++)
@@ -274,50 +274,50 @@ void Load2D(std::string filename, ManagedArray& input, const char* delimiter, in
 				input(x, y) = temp[y][x];
 		}
 	}
-	
+
 	file.close();
 }
 
 void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::vector<double> kernelParams, int category, double c, int passes, double tolerance, bool save, std::string SaveDirectory, std::string SaveJSON)
 {
 	std::string BaseDirectory = "./";
-	
+
 	if (InputData.length() > 0)
 	{
 		auto Inputs = 0;
 		auto Categories = 0;
 		auto Examples = 0;
-		
+
 		auto input = ManagedArray();
 		auto output = ManagedArray();
-		
+
 		Load2D(InputData, input, output, delimiter == 0 ? "\t" : ",", Inputs, Categories, Examples);
-		
+
 		std::cerr << std::endl << Examples <<" lines read with " << Inputs <<" inputs and " << Categories << " categories" << std::endl;
-		
+
 		if (Inputs > 0 && Categories > 0 && Examples > 0 && kernel != KernelType::UNKNOWN)
 		{
 			if (category > 0 && category <= Categories)
 			{
 				auto params = ManagedArray((int)kernelParams.size());
-				
+
 				for (auto i = 0; i < params.Length(); i++)
 				{
 					params(i) = kernelParams[i];
 				}
-				
+
 				auto start = Profiler::now();
-				
+
 				auto model = Model();
-				
+
 				model.GetNormalization(input);
-				
+
 				std::cerr << std::endl << "Training Model..." << std::endl;
-				
+
 				model.Train(input, output, c, kernel, params, tolerance, passes, category);
-				
+
 				std::cerr << "Training Done" << std::endl;
-				
+
 				std::cerr << "elapsed time is " << Profiler::Elapsed(start) << " ms" << std::endl;
 
 				if (save && SaveJSON.length() > 0)
@@ -326,74 +326,74 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 
 					ManagedFile::SaveJSON(SaveDirectory.empty() ? BaseDirectory : SaveDirectory, SaveJSON, ManagedUtil::Serialize(model));
 				}
-				
+
 				ManagedOps::Free(params);
-				
+
 				model.Free();
 			}
 			else
 			{
 				auto params = ManagedArray((int)kernelParams.size());
-				
+
 				for (auto i = 0; i < params.Length(); i++)
 				{
 					params(i) = kernelParams[i];
 				}
-				
+
 				std::vector<Model> models;
-				
+
 				auto start = Profiler::now();
-				
+
 				for (auto i = 0; i < Categories; i++)
 				{
 					auto model = Model();
-					
+
 					model.GetNormalization(input);
 					model.Setup(input, output, c, kernel, params, tolerance, passes, i + 1);
 					models.push_back(model);
 				}
-				
+
 				auto done = false;
-				
+
 				std::cerr << std::endl << "Training Models..." << std::endl;
-				
+
 				while (!done)
 				{
 					done = true;
-					
+
 					for (auto i = 0; i < models.size(); i++)
 					{
 						auto result = models[i].Step();
-					
+
 						if (result && !models[i].Trained)
 						{
 							models[i].Generate();
 						}
-						
+
 						done &= result;
 					}
 				}
-				
+
 				std::cerr << "Training Done" << std::endl;
-				
+
 				std::cerr << "elapsed time is " << Profiler::Elapsed(start) << " ms" << std::endl;
-				
+
 				if (save && SaveJSON.length() > 0)
 				{
 					std::cerr << std::endl << "Saving Model Parameters" << std::endl;
 
 					ManagedFile::SaveJSON(SaveDirectory.empty() ? BaseDirectory : SaveDirectory, SaveJSON, ManagedUtil::Serialize(models));
 				}
-				
+
 				ManagedOps::Free(params);
-				
+
 				for (auto i = 0; i < models.size(); i++)
 				{
 					models[i].Free();
-				}	
+				}
 			}
 		}
-		
+
 		ManagedOps::Free(input);
 		ManagedOps::Free(output);
 	}
@@ -402,17 +402,17 @@ void SVMTrainer(std::string InputData, int delimiter, KernelType kernel, std::ve
 void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int Features, bool save, std::string SaveDirectory, std::string ClassificationFile)
 {
 	std::string BaseDirectory = "./";
-	
+
 	if (InputData.length() > 0)
 	{
 		auto Samples = 0;
-		
+
 		auto input = ManagedArray();
-		
+
 		Load2D(InputData, input, delimiter == 0 ? "\t" : ",", Features, Samples);
-		
+
 		std::cerr << std::endl << Samples <<" lines read with " << Features << " features" << std::endl;
-		
+
 		if (Features > 0 && Samples > 0)
 		{
 			auto models = ManagedUtil::Deserialize(ModelFile);
@@ -421,7 +421,7 @@ void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int
 			ManagedOps::Set(classification, 0);
 
 			std::cerr << std::endl << "Classifying input data..." << std::endl;
-			
+
 			auto start = Profiler::now();
 
 			for (auto i = 0; i < (int)models.size(); i++)
@@ -443,24 +443,24 @@ void SVMPredict(std::string InputData, std::string ModelFile, int delimiter, int
 
 				models[i].Free();
 			}
-			
+
 			std::cerr << std::endl << "Classification:" << std::endl;
 			ManagedMatrix::PrintList(classification, true);
-			
+
 			std::cerr << std::endl << "Classification Done:" << std::endl;
 			std::cerr << "elapsed time is " << Profiler::Elapsed(start) << " ms" << std::endl;
 
 			if (save && ClassificationFile.length() > 0)
 			{
 				std::cerr << std::endl << "Saving classification results" << std::endl;
-				
+
 				ManagedFile::SaveClassification(SaveDirectory.empty() ? BaseDirectory : SaveDirectory, ClassificationFile, classification);
 			}
 
 			ManagedOps::Free(prediction);
 			ManagedOps::Free(classification);
 		}
-		
+
 		ManagedOps::Free(input);
 	}
 }
@@ -479,9 +479,9 @@ int main(int argc, char** argv)
 	auto predict = false;
 	auto features = 0;
 
-	// Files	
+	// Files
 	auto save = false;
-	
+
 	char SaveDirectory[200];
 	SaveDirectory[0] = '\0';
 
@@ -492,7 +492,7 @@ int main(int argc, char** argv)
 
 	char InputData[200];
 	InputData[0] = '\0';
-	
+
 	char ModelFile[200];
 	ModelFile[0] = '\0';
 
@@ -513,37 +513,37 @@ int main(int argc, char** argv)
 		else if (!arg.compare("/POLYNOMIAL"))
 		{
 			type = KernelType::POLYNOMIAL;
-			
+
 			std::cerr << "... Kernel type = Polynomial" << std::endl;
 		}
 		else if (!arg.compare("/GAUSSIAN"))
 		{
 			type = KernelType::GAUSSIAN;
-			
+
 			std::cerr << "... Kernel type = Gaussian" << std::endl;
 		}
 		else if (!arg.compare("/RADIAL"))
 		{
 			type = KernelType::RADIAL;
-			
+
 			std::cerr << "... Kernel type = Radial basis functions" << std::endl;
 		}
 		else if (!arg.compare("/SIGMOID"))
 		{
 			type = KernelType::SIGMOID;
-			
+
 			std::cerr << "... Kernel type = Sigmoid" << std::endl;
 		}
 		else if (!arg.compare("/LINEAR"))
 		{
 			type = KernelType::LINEAR;
-			
+
 			std::cerr << "... Kernel type = Linear" << std::endl;
 		}
 		else if (!arg.compare("/FOURIER"))
 		{
 			type = KernelType::FOURIER;
-			
+
 			std::cerr << "... Kernel type = Fourier basis functions" << std::endl;
 		}
 		else if (!arg.compare("/TAB"))
@@ -568,7 +568,7 @@ int main(int argc, char** argv)
 		{
 			std::copy(&argv[i][6], &argv[i][6] + sizeof(SaveJSON), SaveJSON);
 		}
-		
+
 		if (!arg.compare(0, 7, "/INPUT=") && arg.length() > 7)
 		{
 			std::copy(&argv[i][7], &argv[i][7] + sizeof(InputData), InputData);
@@ -607,12 +607,12 @@ int main(int argc, char** argv)
 
 		std::cerr << "... Save Directory: " << SaveDirectory << std::endl;
 	}
-	
+
 	if (std::string(InputData).length() > 0)
 	{
 		std::cerr << "... Input training data: " << InputData << std::endl;
 	}
-	
+
 	if (std::string(ModelFile).length() > 0)
 	{
 		std::cerr << "... Model File: " << ModelFile << std::endl;
@@ -636,6 +636,6 @@ int main(int argc, char** argv)
 	{
 		SVMTrainer(InputData, delimiter, type, parameters, category, c, passes, tolerance, save, SaveDir, SaveJSON);
 	}
-		
+
 	return 0;
 }

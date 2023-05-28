@@ -9,7 +9,7 @@
 class KernelFunction
 {
 public:
-	
+
 	static void Vectorize(ManagedArray& x1, ManagedArray& x2)
 	{
 		// Reshape into column vectors
@@ -47,7 +47,7 @@ public:
 
 		return x;
 	}
-	
+
 	static double Linear(ManagedArray& x1, ManagedArray& x2, ManagedArray& k)
 	{
 		auto x = Multiply(x1, x2);
